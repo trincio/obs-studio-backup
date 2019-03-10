@@ -33,6 +33,7 @@
 #if !defined(__APPLE__)
 #include <sys/times.h>
 #include <sys/wait.h>
+#include <libgen.h>
 #ifdef __FreeBSD__
 #include <sys/param.h>
 #include <sys/queue.h>
