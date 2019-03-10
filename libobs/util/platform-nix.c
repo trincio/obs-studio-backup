@@ -265,6 +265,28 @@ char *os_get_program_data_path_ptr(const char *name)
 	return str;
 }
 
+char *os_get_executable_path_ptr(const char *name)
+{
+	char exe[PATH_MAX];
+	ssize_t count = readlink("/proc/self/exe", exe, PATH_MAX);
+	const char *path_out = NULL;
+	struct dstr path;
+
+	if (count == -1) {
+		return NULL;
+	}
+
+	path_out = dirname(exe);
+	if (!path_out) {
+		return NULL;
+	}
+
+	dstr_init_copy(&path, path_out);
+	dstr_cat(&path, "/");
+	dstr_cat(&path, path_out);
+	return path.array;
+}
+
 #endif
 
 bool os_file_exists(const char *path)
