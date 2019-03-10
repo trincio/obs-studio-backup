@@ -30,6 +30,7 @@
 #include <CoreServices/CoreServices.h>
 #include <mach/mach.h>
 #include <mach/mach_time.h>
+#include <mach-o/dyld.h>
 
 #include <IOKit/pwr_mgt/IOPMLib.h>
 
