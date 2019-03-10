@@ -284,7 +284,11 @@ char *os_get_executable_path_ptr(const char *name)
 
 	dstr_init_copy(&path, path_out);
 	dstr_cat(&path, "/");
-	dstr_cat(&path, path_out);
+
+	if (name && *name) {
+		dstr_cat(&path, name);
+	}
+
 	return path.array;
 }
 

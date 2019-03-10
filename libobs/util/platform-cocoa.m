@@ -165,7 +165,9 @@ char *os_get_executable_path_ptr(const char *name)
 		dstr_resize(&path, len);
 	}
 
-	dstr_cat(&path, path_out);
+	if (name && *name) {
+		dstr_cat(&path, name);
+	}
 	return path.array;
 }
 
