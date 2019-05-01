@@ -796,7 +796,7 @@ private slots:
 	void OpenMultiviewWindow();
 	void OpenSceneWindow();
 
-	void DeferredSysTrayLoad(int requeueCount);
+	void DeferredLoad(const QString &file, int requeueCount);
 
 	void StackedMixerAreaContextMenuRequested();
 
