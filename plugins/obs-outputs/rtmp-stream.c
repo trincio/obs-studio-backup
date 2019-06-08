@@ -1119,7 +1119,7 @@ static bool dbr_bitrate_lowered(struct rtmp_stream *stream,
 	}
 
 	if (stream->dbr_prev_bitrate) {
-		blog(LOG_DEBUG, "bitrate going back to prev");
+		blog(LOG_INFO, "bitrate going back to prev");
 		new_bitrate = stream->dbr_prev_bitrate;
 		goto prev_bitrate;
 	}
@@ -1151,7 +1151,7 @@ prev_bitrate:
 	stream->dbr_prev_bitrate = 0;
 	stream->dbr_cur_bitrate = new_bitrate;
 	stream->dbr_inc_timeout = os_gettime_ns() + DBR_INC_TIMER;
-	blog(LOG_DEBUG, "bitrate decreased to: %ld", stream->dbr_cur_bitrate);
+	blog(LOG_INFO, "bitrate decreased to: %ld", stream->dbr_cur_bitrate);
 	return true;
 }
 
@@ -1173,10 +1173,10 @@ static void dbr_inc_bitrate(struct rtmp_stream *stream)
 
 	if (stream->dbr_cur_bitrate >= stream->dbr_orig_bitrate) {
 		stream->dbr_cur_bitrate = stream->dbr_orig_bitrate;
-		blog(LOG_DEBUG, "bitrate increased to: %ld, done", stream->dbr_cur_bitrate);
+		blog(LOG_INFO, "bitrate increased to: %ld, done", stream->dbr_cur_bitrate);
 	} else if (stream->dbr_cur_bitrate < stream->dbr_orig_bitrate) {
 		stream->dbr_inc_timeout = os_gettime_ns() + DBR_INC_TIMER;
-		blog(LOG_DEBUG, "bitrate increased to: %ld, waiting", stream->dbr_cur_bitrate);
+		blog(LOG_INFO, "bitrate increased to: %ld, waiting", stream->dbr_cur_bitrate);
 	}
 }
 
