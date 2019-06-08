@@ -1177,8 +1177,6 @@ static void dbr_inc_bitrate(struct rtmp_stream *stream)
 	} else if (stream->dbr_cur_bitrate < stream->dbr_orig_bitrate) {
 		stream->dbr_inc_timeout = os_gettime_ns() + DBR_INC_TIMER;
 		blog(LOG_DEBUG, "bitrate increased to: %ld, waiting", stream->dbr_cur_bitrate);
-	} else {
-		blog(LOG_DEBUG, "?????");
 	}
 }
 
