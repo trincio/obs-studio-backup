@@ -1083,7 +1083,7 @@ static void drop_frames(struct rtmp_stream *stream, const char *name,
 
 	stream->dropped_frames += num_frames_dropped;
 #ifdef _DEBUG
-	debug("Dropped %s, prev packet count: %d, new packet count: %d",
+	info("Dropped %s, prev packet count: %d, new packet count: %d",
 			name,
 			start_packets,
 			(int)num_buffered_packets(stream));
