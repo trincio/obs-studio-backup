@@ -1122,14 +1122,23 @@ static bool find_first_video_packet(struct rtmp_stream *stream,
 
 #define DBR_INC_TIMER 8000000000
 
-static bool dbr_bitrate_lowered(struct rtmp_stream *stream)
+static bool dbr_bitrate_lowered(struct rtmp_stream *stream,
+		int64_t buffer_duration_usec)
 {
 	long new_bitrate;
+
+	if (buffer_duration_usec < (stream->drop_threshold_usec / 2)) {
+		return false;
+	}
 
 	if (stream->dbr_prev_bitrate) {
 		blog(LOG_DEBUG, "bitrate going back to prev");
 		new_bitrate = stream->dbr_prev_bitrate;
 		goto prev_bitrate;
+	}
+
+	if (buffer_duration_usec < stream->drop_threshold_usec) {
+		return false;
 	}
 
 	if (!stream->dbr_est_bitrate) {
@@ -1233,16 +1242,15 @@ static void check_to_drop_frames(struct rtmp_stream *stream, bool pframes)
 	}
 
 	if (!pframes && stream->dbr_enabled) {
-		if (buffer_duration_usec > (stream->drop_threshold_usec / 2)) {
-			bool bitrate_changed;
+		bool bitrate_changed;
 
-			pthread_mutex_lock(&stream->dbr_mutex);
-			bitrate_changed = dbr_bitrate_lowered(stream);
-			pthread_mutex_unlock(&stream->dbr_mutex);
+		pthread_mutex_lock(&stream->dbr_mutex);
+		bitrate_changed = dbr_bitrate_lowered(stream,
+				buffer_duration_usec);
+		pthread_mutex_unlock(&stream->dbr_mutex);
 
-			if (bitrate_changed)
-				dbr_set_bitrate(stream);
-		}
+		if (bitrate_changed)
+			dbr_set_bitrate(stream);
 	}
 
 	if (buffer_duration_usec > drop_threshold) {
