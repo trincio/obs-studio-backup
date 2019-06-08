@@ -1103,45 +1103,43 @@ static bool find_first_video_packet(struct rtmp_stream *stream,
 
 #define DBR_INC_TIMER 8000000000
 
-static bool dbr_bitrate_lowered(struct rtmp_stream *stream,
-		int64_t buffer_duration_usec)
+static bool dbr_bitrate_lowered(struct rtmp_stream *stream)
 {
+	long prev_bitrate = stream->dbr_prev_bitrate;
+	long est_bitrate = 0;
 	long new_bitrate;
 
-	if (buffer_duration_usec < (stream->drop_threshold_usec / 2)) {
+	if (stream->dbr_est_bitrate &&
+	    stream->dbr_est_bitrate < stream->dbr_cur_bitrate) {
+		stream->dbr_data_size = 0;
+		circlebuf_pop_front(&stream->dbr_frames, NULL,
+				stream->dbr_frames.size);
+		est_bitrate = stream->dbr_est_bitrate / 100 * 100;
+		if (est_bitrate < 500) {
+			est_bitrate = 500;
+		}
+	}
+
+	if (prev_bitrate && est_bitrate) {
+		new_bitrate = prev_bitrate < est_bitrate
+			? prev_bitrate
+			: est_bitrate;
+
+	} else if (prev_bitrate) {
+		new_bitrate = prev_bitrate;
+		blog(LOG_INFO, "going back to prev bitrate");
+
+	} else if (est_bitrate) {
+		new_bitrate = est_bitrate;
+
+	} else {
 		return false;
-	}
-
-	if (stream->dbr_prev_bitrate) {
-		blog(LOG_INFO, "bitrate going back to prev");
-		new_bitrate = stream->dbr_prev_bitrate;
-		goto prev_bitrate;
-	}
-
-	if (buffer_duration_usec < stream->drop_threshold_usec) {
-		return false;
-	}
-
-	if (!stream->dbr_est_bitrate) {
-		return false;
-	}
-
-	if (stream->dbr_est_bitrate >= stream->dbr_cur_bitrate) {
-		return false;
-	}
-
-	stream->dbr_data_size = 0;
-	circlebuf_pop_front(&stream->dbr_frames, NULL, stream->dbr_frames.size);
-	new_bitrate = stream->dbr_est_bitrate / 100 * 100;
-	if (new_bitrate < 500) {
-		new_bitrate = 500;
 	}
 
 	if (new_bitrate == stream->dbr_cur_bitrate) {
 		return false;
 	}
 
-prev_bitrate:
 	stream->dbr_prev_bitrate = 0;
 	stream->dbr_cur_bitrate = new_bitrate;
 	stream->dbr_inc_timeout = os_gettime_ns() + DBR_INC_TIMER;
@@ -1217,12 +1215,13 @@ static void check_to_drop_frames(struct rtmp_stream *stream, bool pframes)
 	}
 
 	if (!pframes && stream->dbr_enabled) {
-		bool bitrate_changed;
+		bool bitrate_changed = false;
 
-		pthread_mutex_lock(&stream->dbr_mutex);
-		bitrate_changed = dbr_bitrate_lowered(stream,
-				buffer_duration_usec);
-		pthread_mutex_unlock(&stream->dbr_mutex);
+		if (buffer_duration_usec >= (stream->drop_threshold_usec / 2)) {
+			pthread_mutex_lock(&stream->dbr_mutex);
+			bitrate_changed = dbr_bitrate_lowered(stream);
+			pthread_mutex_unlock(&stream->dbr_mutex);
+		}
 
 		if (bitrate_changed)
 			dbr_set_bitrate(stream);
