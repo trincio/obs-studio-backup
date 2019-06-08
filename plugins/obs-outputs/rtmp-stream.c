@@ -482,14 +482,6 @@ static void dbr_add_frame(struct rtmp_stream *stream, struct dbr_frame *back)
 		: 0;
 	stream->dbr_est_bitrate *= 8;
 	stream->dbr_est_bitrate /= 1000;
-
-	static int chi = 0;
-
-	if (++chi >= 10) {
-		chi = 0;
-		/*blog(LOG_DEBUG, "estimated bitrate: %ld",
-				stream->dbr_est_bitrate);*/
-	}
 }
 
 static void *send_thread(void *data)
