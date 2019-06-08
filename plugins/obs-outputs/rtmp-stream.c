@@ -1050,11 +1050,7 @@ static void drop_frames(struct rtmp_stream *stream, const char *name,
 	struct circlebuf new_buf            = {0};
 	int              num_frames_dropped = 0;
 
-#ifdef _DEBUG
 	int start_packets = (int)num_buffered_packets(stream);
-#else
-	UNUSED_PARAMETER(name);
-#endif
 
 	circlebuf_reserve(&new_buf, sizeof(struct encoder_packet) * 8);
 
@@ -1082,12 +1078,10 @@ static void drop_frames(struct rtmp_stream *stream, const char *name,
 		return;
 
 	stream->dropped_frames += num_frames_dropped;
-#ifdef _DEBUG
 	info("Dropped %s, prev packet count: %d, new packet count: %d",
 			name,
 			start_packets,
 			(int)num_buffered_packets(stream));
-#endif
 }
 
 static bool find_first_video_packet(struct rtmp_stream *stream,
