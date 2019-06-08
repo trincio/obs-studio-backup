@@ -464,20 +464,16 @@ static void dbr_add_frame(struct rtmp_stream *stream, struct dbr_frame *back)
 {
 	struct dbr_frame front;
 	uint64_t dur;
-	uint64_t time_ms;
 
 	circlebuf_push_back(&stream->dbr_frames, back, sizeof(*back));
 	circlebuf_peek_front(&stream->dbr_frames, &front, sizeof(front));
 
 	stream->dbr_data_size += back->size;
-	stream->dbr_time += back->send_end - back->send_beg;
 
 	dur = (back->send_end - front.send_beg) / 1000000;
-	time_ms = stream->dbr_time / 1000000;
 
 	if (dur >= MAX_ESTIMATE_DURATION_MS) {
 		stream->dbr_data_size -= front.size;
-		stream->dbr_time -= front.send_end - front.send_beg;
 		circlebuf_pop_front(&stream->dbr_frames, NULL, sizeof(front));
 	}
 
@@ -974,7 +970,6 @@ static bool init_connect(struct rtmp_stream *stream)
 
 	circlebuf_free(&stream->dbr_frames);
 	stream->dbr_data_size = 0;
-	stream->dbr_time = 0;
 	stream->dbr_orig_bitrate = (long)obs_data_get_int(vsettings, "bitrate");
 	stream->dbr_cur_bitrate = stream->dbr_orig_bitrate;
 	stream->dbr_est_bitrate = 0;
@@ -1149,11 +1144,7 @@ static bool dbr_bitrate_lowered(struct rtmp_stream *stream,
 		return false;
 	}
 
-	blog(LOG_DEBUG, "dbr_time: %llu", stream->dbr_time);
-	blog(LOG_DEBUG, "dbr_data_size: %llu", stream->dbr_data_size);
-
 	stream->dbr_data_size = 0;
-	stream->dbr_time = 0;
 	circlebuf_pop_front(&stream->dbr_frames, NULL, stream->dbr_frames.size);
 	new_bitrate = stream->dbr_est_bitrate / 100 * 100;
 	if (new_bitrate < 500) {

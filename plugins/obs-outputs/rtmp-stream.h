@@ -99,7 +99,6 @@ struct rtmp_stream {
 	pthread_mutex_t  dbr_mutex;
 	struct circlebuf dbr_frames;
 	size_t           dbr_data_size;
-	uint64_t         dbr_time;
 	uint64_t         dbr_inc_timeout;
 	long             dbr_est_bitrate;
 	long             dbr_orig_bitrate;
